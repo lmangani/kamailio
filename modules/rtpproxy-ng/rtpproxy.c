@@ -1902,36 +1902,49 @@ static int
 pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 		  pv_value_t *res)
 {
-	bencode_buffer_t bencbuf;
-	bencode_item_t *dict, *tot, *in, *out;
-	static char buf[256];
-	str ret;
+ bencode_buffer_t bencbuf;
+        bencode_item_t *dict, *tot, *in, *out, *inp, *outp;
+        static char buf[256];
+        str ret;
 
-	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
-	if (!dict)
-		return -1;
+        dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
+        if (!dict)
+                return -1;
 
-	tot = bencode_dictionary_get_expect(dict, "totals", BENCODE_DICTIONARY);
-	in = bencode_dictionary_get_expect(tot, "input", BENCODE_DICTIONARY);
-	in = bencode_dictionary_get_expect(in, "rtp", BENCODE_DICTIONARY);
-	out = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
-	out = bencode_dictionary_get_expect(out, "rtp", BENCODE_DICTIONARY);
+        tot = bencode_dictionary_get_expect(dict, "totals", BENCODE_DICTIONARY);
+        in = bencode_dictionary_get_expect(tot, "input", BENCODE_DICTIONARY);
+        in = bencode_dictionary_get_expect(in, "rtp", BENCODE_DICTIONARY);
+        inp = bencode_dictionary_get_expect(tot, "input", BENCODE_DICTIONARY);
+        inp = bencode_dictionary_get_expect(inp, "rtcp", BENCODE_DICTIONARY);
+        out = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
+        out = bencode_dictionary_get_expect(out, "rtp", BENCODE_DICTIONARY);
+        outp = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
+        outp = bencode_dictionary_get_expect(outp, "rtcp", BENCODE_DICTIONARY);
 
-	if (!in || !out)
-		goto error;
+        if (!in || !out)
+                goto error;
 
-	ret.s = buf;
-	ret.len = snprintf(buf, sizeof(buf),
-			"Input: %lli bytes, %lli packets, %lli errors; "
-			"Output: %lli bytes, %lli packets, %lli errors",
-			bencode_dictionary_get_integer(in, "bytes", -1),
-			bencode_dictionary_get_integer(in, "packets", -1),
-			bencode_dictionary_get_integer(in, "errors", -1),
-			bencode_dictionary_get_integer(out, "bytes", -1),
-			bencode_dictionary_get_integer(out, "packets", -1),
-			bencode_dictionary_get_integer(out, "errors", -1));
+        ret.s = buf;
+        ret.len = snprintf(buf, sizeof(buf),
+                        "Input RTP: %lli bytes, %lli packets, %lli errors;"
+                        "Input RTCP %lli bytes, %lli packets, %lli errors;"
+                        "Output RTP: %lli bytes, %lli packets, %lli errors;"
+                        "Output RTCP: %lli bytes, %lli packets, %lli errors;",
+                        bencode_dictionary_get_integer(in, "bytes", -1),
+                        bencode_dictionary_get_integer(in, "packets", -1),
+                        bencode_dictionary_get_integer(in, "errors", -1),
+                        bencode_dictionary_get_integer(inp, "bytes", -1),
+                        bencode_dictionary_get_integer(inp, "packets", -1),
+                        bencode_dictionary_get_integer(inp, "errors", -1),
+                        bencode_dictionary_get_integer(out, "bytes", -1),
+                        bencode_dictionary_get_integer(out, "packets", -1),
+                        bencode_dictionary_get_integer(out, "errors", -1),
+                        bencode_dictionary_get_integer(outp, "bytes", -1),
+                        bencode_dictionary_get_integer(outp, "packets", -1),
+                        bencode_dictionary_get_integer(outp, "errors", -1));
 
-	bencode_buffer_free(&bencbuf);
+        bencode_buffer_free(&bencbuf);
+
 	return pv_get_strval(msg, param, res, &ret);
 
 error:
