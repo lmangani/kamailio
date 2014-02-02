@@ -1926,7 +1926,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 
         ret.s = buf;
         ret.len = snprintf(buf, sizeof(buf),
-                        "TE=%lli;OR=%lli;PR=%lli;ER=%lli;"
+                        "TSE=%lli;OR=%lli;PR=%lli;ER=%lli;"
                         "ORC=%lli;OPR=%lli;OER=%lli;"
                         "OS=%lli;PS=%lli;ES=%lli;"
                         "OSC=%lli;PSC=%lli;ESC=%lli;",
