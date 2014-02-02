@@ -1926,10 +1926,11 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 
         ret.s = buf;
         ret.len = snprintf(buf, sizeof(buf),
-                        "Input RTP: %lli bytes, %lli packets, %lli errors;"
-                        "Input RTCP %lli bytes, %lli packets, %lli errors;"
-                        "Output RTP: %lli bytes, %lli packets, %lli errors;"
-                        "Output RTCP: %lli bytes, %lli packets, %lli errors;",
+                        "TE=%lli;OR=%lli;PR=%lli;ER=%lli;"
+                        "ORC=%lli;OPR=%lli;OER=%lli;"
+                        "OS=%lli;PS=%lli;ES=%lli;"
+                        "OSC=%lli;PSC=%lli;ESC=%lli;",
+                        bencode_dictionary_get_integer(dict, "created", -1),
                         bencode_dictionary_get_integer(in, "bytes", -1),
                         bencode_dictionary_get_integer(in, "packets", -1),
                         bencode_dictionary_get_integer(in, "errors", -1),
