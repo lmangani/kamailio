@@ -1922,41 +1922,43 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
         outp = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
         outp = bencode_dictionary_get_expect(outp, "rtcp", BENCODE_DICTIONARY);
 
-        streams_list = bencode_dictionary_get_expect(dict, "streams",BENCODE_LIST);
-        stream = streams_list->child;
-        /* TODO: validate streams presence */
-        /* assert(stream->type == BENCODE_LIST); */
-        side_A = stream->child;
-        side_B = side_A->sibling;
-
-        /* extract peer information detail */
-        str coda,codb,ipa,ipb;
-
-        bencode_dictionary_get_str(side_A, "codec", &coda);
-        bencode_dictionary_get_str(side_B, "codec", &codb);
-
-        ip_A = bencode_dictionary_get_expect(side_A, "stats", BENCODE_DICTIONARY);
-        ip_A = bencode_dictionary_get_expect(ip_A, "rtp", BENCODE_DICTIONARY);
-        ip_A = bencode_dictionary_get_expect(ip_A, "peer address", BENCODE_DICTIONARY);
-        bencode_dictionary_get_str(ip_A, "address", &ipa);
-
-        ip_B = bencode_dictionary_get_expect(side_B, "stats", BENCODE_DICTIONARY);
-        ip_B = bencode_dictionary_get_expect(ip_B, "rtp", BENCODE_DICTIONARY);
-        ip_B = bencode_dictionary_get_expect(ip_B, "peer address", BENCODE_DICTIONARY);
-        bencode_dictionary_get_str(ip_B, "address", &ipb);
-
         if (!in || !out)
                 goto error;
 
-        ret.s = buf;
-        ret.len = snprintf(buf, sizeof(buf),
+        streams_list = bencode_dictionary_get_expect(dict, "streams",BENCODE_LIST);
+        stream = streams_list->child;
+        
+        /* assert(stream->type == BENCODE_LIST); */
+        if ( stream->type == BENCODE_LIST ) {
+
+                side_A = stream->child;
+                side_B = side_A->sibling;
+
+                /* extract peer information detail */
+                str coda,codb,ipa,ipb;
+
+                bencode_dictionary_get_str(side_A, "codec", &coda);
+                bencode_dictionary_get_str(side_B, "codec", &codb);
+
+                ip_A = bencode_dictionary_get_expect(side_A, "stats", BENCODE_DICTIONARY);
+                ip_A = bencode_dictionary_get_expect(ip_A, "rtp", BENCODE_DICTIONARY);
+                ip_A = bencode_dictionary_get_expect(ip_A, "peer address", BENCODE_DICTIONARY);
+                bencode_dictionary_get_str(ip_A, "address", &ipa);
+
+                ip_B = bencode_dictionary_get_expect(side_B, "stats", BENCODE_DICTIONARY);
+                ip_B = bencode_dictionary_get_expect(ip_B, "rtp", BENCODE_DICTIONARY);
+                ip_B = bencode_dictionary_get_expect(ip_B, "peer address", BENCODE_DICTIONARY);
+                bencode_dictionary_get_str(ip_B, "address", &ipb);
+
+
+                /* full stats */
+                ret.s = buf;
+                ret.len = snprintf(buf, sizeof(buf),
                         "TSB=%lli;EN=%.*s;DE=%.*s;"
                         "OR=%lli;PR=%lli;ER=%lli;"
-                        "ORC=%lli;OPR=%lli;"
-                        /* "ERC=%lli;" */
+                        "ORC=%lli;PRC=%lli;"
                         "OS=%lli;PS=%lli;ES=%lli;"
                         "OSC=%lli;PSC=%lli;"
-                        /* "ESC=%lli;" */
                         "IPL=%.*s;PTL=%lli;IPR=%.*s;PTR=%lli;",
                         bencode_dictionary_get_integer(dict, "created", -1),
                         STR_FMT(&coda),STR_FMT(&codb),
@@ -1978,8 +1980,35 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
                         bencode_dictionary_get_integer(ip_B, "port", -1)
                         );
 
+        }
+        else {
+
+                /* packets only stats */
+                ret.s = buf;
+                ret.len = snprintf(buf, sizeof(buf),
+                        "TSB=%lli;"
+                        "OR=%lli;PR=%lli;ER=%lli;"
+                        "ORC=%lli;PRC=%lli;"
+                        "OS=%lli;PS=%lli;ES=%lli;"
+                        "OSC=%lli;PSC=%lli;",
+                        bencode_dictionary_get_integer(dict, "created", -1),
+                        bencode_dictionary_get_integer(in, "bytes", -1),
+                        bencode_dictionary_get_integer(in, "packets", -1),
+                        bencode_dictionary_get_integer(in, "errors", -1),
+                        bencode_dictionary_get_integer(inp, "bytes", -1),
+                        bencode_dictionary_get_integer(inp, "packets", -1),
+                        /* bencode_dictionary_get_integer(inp, "errors", -1), */
+                        bencode_dictionary_get_integer(out, "bytes", -1),
+                        bencode_dictionary_get_integer(out, "packets", -1),
+                        bencode_dictionary_get_integer(out, "errors", -1),
+                        bencode_dictionary_get_integer(outp, "bytes", -1),
+                        bencode_dictionary_get_integer(outp, "packets", -1));
+
+        }
+
         bencode_buffer_free(&bencbuf);
         return pv_get_strval(msg, param, res, &ret);
+
 
 error:
 	bencode_buffer_free(&bencbuf);
