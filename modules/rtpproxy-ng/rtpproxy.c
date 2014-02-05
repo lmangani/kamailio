@@ -1951,7 +1951,9 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
                 bencode_dictionary_get_str(ip_B, "address", &ipb);
 
 
-                /* full stats */
+		/* X-NG-RTP-STATS format */ 
+		
+                /* full stats output */
                 ret.s = buf;
                 ret.len = snprintf(buf, sizeof(buf),
                         "TSB=%lli;EN=%.*s;DE=%.*s;"
