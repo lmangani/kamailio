@@ -1951,17 +1951,46 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
                 bencode_dictionary_get_str(ip_B, "address", &ipb);
 
 
-		/* X-NG-RTP-STATS format */ 
+		/* X-NG-RTP-STATS format, temporary definitions */ 
+		/*
+		
+		TSB = Date and time of the beginning of the report period (unix timestamp)
+		TSE = Date and time of the end of the report period (unix timestamp)
+		IP = <local ip:local port>,<remote ip:remote port>
+		EN / DE = Codec - Encoding/Decoding
+		SRCS = Identifier of RTP stream sent 
+		SRCR = Identifier of RTP stream received 
+		JI = <average jitter>,<peak jitter> Interarrival Jitter
+		LA = Average round trip delay or Latency
+		PR = RTP Packets received 
+		PRC = RTCP Packets received 
+		PS = RTP Packets sent (PS= Pr + PD)
+		PSC = RTCP Packets sent
+		PL = Count of lost packets
+		PD = Count of discarded packets
+		OS = RTP Octets sent
+		OSC = RTCP Octets sent
+		OR = RTP Octets received
+		ORC = RTCP Octets received
+		IE = Impairments from low-bit codecs and packet loss
+		SS = Number of Silence Suppression Activations
+		XS = Count of receive errors (relay only)
+		XR = Count of send errors (relay only)
+		EX = Reporter Name or Type
+		MT = Media Type
+		
+		*/
 		
                 /* full stats output */
                 ret.s = buf;
                 ret.len = snprintf(buf, sizeof(buf),
                         "TSB=%lli;EN=%.*s;DE=%.*s;"
-                        "OR=%lli;PR=%lli;ER=%lli;"
+                        "OR=%lli;PR=%lli;XR=%lli;"
                         "ORC=%lli;PRC=%lli;"
-                        "OS=%lli;PS=%lli;ES=%lli;"
+                        "OS=%lli;PS=%lli;XS=%lli;"
                         "OSC=%lli;PSC=%lli;"
-                        "IPL=%.*s;PTL=%lli;IPR=%.*s;PTR=%lli;",
+                       /* "IPL=%.*s;PTL=%lli;IPR=%.*s;PTR=%lli;" */
+                        "IP=%.*s:%lli,%.*s:%lli;",
                         bencode_dictionary_get_integer(dict, "created", -1),
                         STR_FMT(&coda),STR_FMT(&codb),
                         bencode_dictionary_get_integer(in, "bytes", -1),
@@ -1989,9 +2018,9 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
                 ret.s = buf;
                 ret.len = snprintf(buf, sizeof(buf),
                         "TSB=%lli;"
-                        "OR=%lli;PR=%lli;ER=%lli;"
+                        "OR=%lli;PR=%lli;XR=%lli;"
                         "ORC=%lli;PRC=%lli;"
-                        "OS=%lli;PS=%lli;ES=%lli;"
+                        "OS=%lli;PS=%lli;XS=%lli;"
                         "OSC=%lli;PSC=%lli;",
                         bencode_dictionary_get_integer(dict, "created", -1),
                         bencode_dictionary_get_integer(in, "bytes", -1),
