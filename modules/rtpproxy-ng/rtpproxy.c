@@ -1906,6 +1906,7 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
         bencode_item_t *dict, *tot, *in, *out, *inp, *outp, *streams_list, *stream, *side_A, *side_B, *ip_A, *ip_B;
         static char buf[256];
         str ret;
+        int pdd = 0;
 
         dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL, NULL);
         if (!dict)
@@ -1921,6 +1922,9 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
         out = bencode_dictionary_get_expect(out, "rtp", BENCODE_DICTIONARY);
         outp = bencode_dictionary_get_expect(tot, "output", BENCODE_DICTIONARY);
         outp = bencode_dictionary_get_expect(outp, "rtcp", BENCODE_DICTIONARY);
+
+	pdd = bencode_dictionary_get_integer(in, "errors", 0);
+        pdd = pdd + bencode_dictionary_get_integer(out, "errors", 0);
 
         if (!in || !out)
                 goto error;
@@ -1964,10 +1968,10 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 		LA = Average round trip delay or Latency
 		PR = RTP Packets received 
 		PRC = RTCP Packets received 
-		PS = RTP Packets sent (PS= Pr + PD)
+		PS = RTP Packets sent
 		PSC = RTCP Packets sent
-		PL = Count of lost packets
-		PD = Count of discarded packets
+		PL = Count of lost RTP packets (SEQ)
+		PD = Count of discarded RTP packets (PD = XS + XR)
 		OS = RTP Octets sent
 		OSC = RTCP Octets sent
 		OR = RTP Octets received
@@ -1981,35 +1985,37 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 		
 		*/
 		
-                /* full stats output */
+                 /* full stats */
                 ret.s = buf;
                 ret.len = snprintf(buf, sizeof(buf),
                         "TSB=%lli;EN=%.*s;DE=%.*s;"
-                        "OR=%lli;PR=%lli;XR=%lli;"
+                        "OR=%lli;PR=%lli;"
                         "ORC=%lli;PRC=%lli;"
-                        "OS=%lli;PS=%lli;XS=%lli;"
+                        "OS=%lli;PS=%lli;"
                         "OSC=%lli;PSC=%lli;"
-                       /* "IPL=%.*s;PTL=%lli;IPR=%.*s;PTR=%lli;" */
+                        "PD=%d;"
                         "IP=%.*s:%lli,%.*s:%lli;",
                         bencode_dictionary_get_integer(dict, "created", -1),
                         STR_FMT(&coda),STR_FMT(&codb),
                         bencode_dictionary_get_integer(in, "bytes", -1),
                         bencode_dictionary_get_integer(in, "packets", -1),
-                        bencode_dictionary_get_integer(in, "errors", -1),
+                                /* bencode_dictionary_get_integer(in, "errors", -1), */
                         bencode_dictionary_get_integer(inp, "bytes", -1),
                         bencode_dictionary_get_integer(inp, "packets", -1),
-                        /* bencode_dictionary_get_integer(inp, "errors", -1), */
+                                /* bencode_dictionary_get_integer(inp, "errors", -1), */
                         bencode_dictionary_get_integer(out, "bytes", -1),
                         bencode_dictionary_get_integer(out, "packets", -1),
-                        bencode_dictionary_get_integer(out, "errors", -1),
+                                /* bencode_dictionary_get_integer(out, "errors", -1), */
                         bencode_dictionary_get_integer(outp, "bytes", -1),
                         bencode_dictionary_get_integer(outp, "packets", -1),
-                        /* bencode_dictionary_get_integer(outp, "errors", -1) */
+                                /* bencode_dictionary_get_integer(outp, "errors", -1) */
+                        pdd,
                         STR_FMT(&ipa),
                         bencode_dictionary_get_integer(ip_A, "port", -1),
                         STR_FMT(&ipb),
                         bencode_dictionary_get_integer(ip_B, "port", -1)
                         );
+
 
         }
         else {
